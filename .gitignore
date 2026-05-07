@@ -1,0 +1,42 @@
+# ==========================================
+# STM32CubeIDE & STM32CubeMX .gitignore
+# ==========================================
+
+# 1. Build Folders
+# These contain all the compiled binaries, object files, and map files.
+# The IDE will regenerate these completely from scratch when you click "Build".
+Debug/
+Release/
+build/
+
+# 2. Compiled Output / Build Artifacts (Catch-all)
+# Just in case any of these leak out of the build folders
+*.o
+*.d
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+*.su
+*.a
+
+# 3. STM32CubeMX Backups
+# Whenever you regenerate code, CubeMX creates a backup of your old config.
+*.bak
+*.ioc.bak
+*.mxproject.bak
+
+# 4. Eclipse / STM32CubeIDE Local Workspace Files
+# These contain your specific window layouts and local debugger paths.
+.metadata/
+*.launch
+
+# 5. OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
