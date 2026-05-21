@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdbool.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,6 +46,9 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 
 volatile static uint8_t button_pressed_flag = 0;
+
+volatile static uint8_t rx_char;
+volatile static uint8_t char_received_flag = 0;
 
 
 /* USER CODE END PV */
@@ -97,9 +100,10 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  uint8_t rx_data[100];
-  uint8_t rx_char;
-  uint8_t index = 0;
+  HAL_UART_Receive_IT(&huart2, (uint8_t*)&rx_char, 1);
+
+  static uint8_t rx_data[100];
+  static uint8_t rx_index = 0;
 
   /* USER CODE END 2 */
 
@@ -107,19 +111,21 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if (HAL_UART_Receive(&huart2, &rx_char, 1, 10) == HAL_OK) {
+	  if (1 == char_received_flag) {
 		  if (rx_char == '\r') {
-			  HAL_UART_Transmit(&huart1, rx_data, index, 10);
+			  HAL_UART_Transmit(&huart1, rx_data, rx_index, 10);
 
-			  for (int i = 0; i < index; ++i) {
+			  for (int i = 0; i < rx_index; ++i) {
 				  rx_data[i] = 0;
 			  }
-			  index = 0;
+			  rx_index = 0;
 		  } else {
-			  HAL_UART_Transmit(&huart2, &rx_char, 1, 10);
-			  rx_data[index] = rx_char;
-			  ++index;
+			  HAL_UART_Transmit(&huart2, (uint8_t*)&rx_char, 1, 10);
+			  rx_data[rx_index] = rx_char;
+			  ++rx_index;
 		  }
+
+		  char_received_flag = 0;
 	  }
 
 	  if (1 == button_pressed_flag) {
@@ -307,6 +313,22 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == GPIO_PIN_13) {
 		button_pressed_flag = 1;
 	}
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(huart);
+  /* NOTE: This function should not be modified, when the callback is needed,
+           the HAL_UART_RxCpltCallback could be implemented in the user file
+   */
+
+  if (USART2 == huart->Instance) {
+	  char_received_flag = 1;
+
+	  HAL_UART_Receive_IT(&huart2, (uint8_t*)&rx_char, 1);
+  }
+
 }
 
 /* USER CODE END 4 */
