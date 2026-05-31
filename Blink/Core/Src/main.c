@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -115,9 +116,7 @@ int main(void)
 		  if (rx_char == '\r') {
 			  HAL_UART_Transmit(&huart1, rx_data, rx_index, 10);
 
-			  for (int i = 0; i < rx_index; ++i) {
-				  rx_data[i] = 0;
-			  }
+			  memset(rx_data, 0, rx_index + 1);
 			  rx_index = 0;
 		  } else {
 			  HAL_UART_Transmit(&huart2, (uint8_t*)&rx_char, 1, 10);
