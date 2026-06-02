@@ -49,10 +49,6 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
-volatile static uint8_t button_pressed_flag = 0;
-
-//volatile static uint8_t rx_char;
-//volatile static uint8_t char_received_flag = 0;
 
 
 /* USER CODE END PV */
@@ -106,10 +102,6 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-//  HAL_UART_Receive_IT(&huart2, (uint8_t*)&rx_char, 1);
-//
-//  static uint8_t rx_data[100];
-//  static uint8_t rx_index = 0;
 
   static uint8_t data[200] = {0};
   static uint8_t read_data[200] = {0};
@@ -141,37 +133,6 @@ int main(void)
 
 	  HAL_Delay(100);
 
-//	  HAL_I2C_Mem_Write(&hi2c1, 0x50 << 1, 0x0000, I2C_MEMADD_SIZE_16BIT, data, sizeof(data), 1000);
-//	  HAL_Delay(10);
-//	  //HAL_I2C_Mem_Write(&hi2c1, 0x68 << 1, 0x0000, I2C_MEMADD_SIZE_8BIT, data, sizeof(data), 1000); //ds3231
-//	  if (HAL_I2C_Mem_Read(&hi2c1, 0x50 << 1, 0x0000, I2C_MEMADD_SIZE_16BIT, data, sizeof(data), 1000) != HAL_OK) {
-//		  volatile uint32_t error_code = HAL_I2C_GetError(&hi2c1);
-//	  }
-//	  HAL_Delay(100);
-
-
-//	  if (1 == char_received_flag) {
-//		  if (rx_char == '\r') {
-//			  HAL_UART_Transmit(&huart1, rx_data, rx_index, 10);
-//
-//			  memset(rx_data, 0, rx_index + 1);
-//			  rx_index = 0;
-//		  } else {
-//			  HAL_UART_Transmit(&huart2, (uint8_t*)&rx_char, 1, 10);
-//			  rx_data[rx_index] = rx_char;
-//			  ++rx_index;
-//		  }
-//
-//		  char_received_flag = 0;
-//	  }
-
-	  if (1 == button_pressed_flag) {
-		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-		  //HAL_UART_Transmit(&huart1, (uint8_t*)"S\0a\0n\0y\0a\0\n\0", 6, 10);
-
-		  button_pressed_flag = 0;
-
-	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -380,27 +341,6 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	if (GPIO_Pin == GPIO_PIN_13) {
-		button_pressed_flag = 1;
-	}
-}
-
-//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-//{
-//  /* Prevent unused argument(s) compilation warning */
-//  UNUSED(huart);
-//  /* NOTE: This function should not be modified, when the callback is needed,
-//           the HAL_UART_RxCpltCallback could be implemented in the user file
-//   */
-//
-//  if (USART2 == huart->Instance) {
-//	  char_received_flag = 1;
-//
-//	  HAL_UART_Receive_IT(&huart2, (uint8_t*)&rx_char, 1);
-//  }
-//
-//}
 
 /* USER CODE END 4 */
 
