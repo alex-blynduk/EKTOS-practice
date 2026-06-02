@@ -18,10 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <string.h>
 
 /* USER CODE END Includes */
 
@@ -32,6 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define I2C_PAGE_SIZE 64
 
 /* USER CODE END PD */
 
@@ -41,6 +42,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
@@ -48,8 +51,8 @@ UART_HandleTypeDef huart2;
 
 volatile static uint8_t button_pressed_flag = 0;
 
-volatile static uint8_t rx_char;
-volatile static uint8_t char_received_flag = 0;
+//volatile static uint8_t rx_char;
+//volatile static uint8_t char_received_flag = 0;
 
 
 /* USER CODE END PV */
@@ -59,6 +62,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -99,12 +103,23 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_UART_Receive_IT(&huart2, (uint8_t*)&rx_char, 1);
+//  HAL_UART_Receive_IT(&huart2, (uint8_t*)&rx_char, 1);
+//
+//  static uint8_t rx_data[100];
+//  static uint8_t rx_index = 0;
 
-  static uint8_t rx_data[100];
-  static uint8_t rx_index = 0;
+  static uint8_t data[200] = {0};
+  static uint8_t read_data[200] = {0};
+  static const uint8_t full_pages = sizeof(data) / I2C_PAGE_SIZE;
+  static const uint8_t leftover = sizeof(data) % I2C_PAGE_SIZE;
+
+
+  for (int i = 0; i < sizeof(data); ++i) {
+	  data[i] = i;
+	}
 
   /* USER CODE END 2 */
 
@@ -112,20 +127,43 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if (1 == char_received_flag) {
-		  if (rx_char == '\r') {
-			  HAL_UART_Transmit(&huart1, rx_data, rx_index, 10);
-
-			  memset(rx_data, 0, rx_index + 1);
-			  rx_index = 0;
-		  } else {
-			  HAL_UART_Transmit(&huart2, (uint8_t*)&rx_char, 1, 10);
-			  rx_data[rx_index] = rx_char;
-			  ++rx_index;
-		  }
-
-		  char_received_flag = 0;
+	  for (int i = 0; i < full_pages; ++i) {
+		  HAL_I2C_Mem_Write(&hi2c1, 0x50 << 1, 0x0200 + i * I2C_PAGE_SIZE, I2C_MEMADD_SIZE_16BIT, &data[i * I2C_PAGE_SIZE], I2C_PAGE_SIZE, 1000);
+		  HAL_Delay(5);
 	  }
+	  HAL_I2C_Mem_Write(&hi2c1, 0x50 << 1, 0x0200 + full_pages * I2C_PAGE_SIZE, I2C_MEMADD_SIZE_16BIT, &data[full_pages * I2C_PAGE_SIZE], leftover, 1000);
+
+	  HAL_Delay(10);
+
+	  if (HAL_I2C_Mem_Read(&hi2c1, 0x50 << 1, 0x0200, I2C_MEMADD_SIZE_16BIT, read_data, sizeof(data), 1000) != HAL_OK) {
+		  volatile uint32_t error_code = HAL_I2C_GetError(&hi2c1);
+	  }
+
+	  HAL_Delay(100);
+
+//	  HAL_I2C_Mem_Write(&hi2c1, 0x50 << 1, 0x0000, I2C_MEMADD_SIZE_16BIT, data, sizeof(data), 1000);
+//	  HAL_Delay(10);
+//	  //HAL_I2C_Mem_Write(&hi2c1, 0x68 << 1, 0x0000, I2C_MEMADD_SIZE_8BIT, data, sizeof(data), 1000); //ds3231
+//	  if (HAL_I2C_Mem_Read(&hi2c1, 0x50 << 1, 0x0000, I2C_MEMADD_SIZE_16BIT, data, sizeof(data), 1000) != HAL_OK) {
+//		  volatile uint32_t error_code = HAL_I2C_GetError(&hi2c1);
+//	  }
+//	  HAL_Delay(100);
+
+
+//	  if (1 == char_received_flag) {
+//		  if (rx_char == '\r') {
+//			  HAL_UART_Transmit(&huart1, rx_data, rx_index, 10);
+//
+//			  memset(rx_data, 0, rx_index + 1);
+//			  rx_index = 0;
+//		  } else {
+//			  HAL_UART_Transmit(&huart2, (uint8_t*)&rx_char, 1, 10);
+//			  rx_data[rx_index] = rx_char;
+//			  ++rx_index;
+//		  }
+//
+//		  char_received_flag = 0;
+//	  }
 
 	  if (1 == button_pressed_flag) {
 		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
@@ -186,6 +224,40 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
 }
 
 /**
@@ -314,21 +386,21 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	}
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(huart);
-  /* NOTE: This function should not be modified, when the callback is needed,
-           the HAL_UART_RxCpltCallback could be implemented in the user file
-   */
-
-  if (USART2 == huart->Instance) {
-	  char_received_flag = 1;
-
-	  HAL_UART_Receive_IT(&huart2, (uint8_t*)&rx_char, 1);
-  }
-
-}
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+//{
+//  /* Prevent unused argument(s) compilation warning */
+//  UNUSED(huart);
+//  /* NOTE: This function should not be modified, when the callback is needed,
+//           the HAL_UART_RxCpltCallback could be implemented in the user file
+//   */
+//
+//  if (USART2 == huart->Instance) {
+//	  char_received_flag = 1;
+//
+//	  HAL_UART_Receive_IT(&huart2, (uint8_t*)&rx_char, 1);
+//  }
+//
+//}
 
 /* USER CODE END 4 */
 
